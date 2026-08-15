@@ -1,6 +1,34 @@
+/* ================= PENYIMPANAN TERPADU ================= */
+// window.storage hanya tersedia saat SIMONA dijalankan di dalam Claude Artifacts.
+// Saat di-hosting sendiri (GitHub Pages, Netlify, server kantor, dll), window.storage
+// TIDAK ADA — jadi di sini otomatis jatuh ke localStorage bawaan browser, yang tersimpan
+// permanen per-domain selama browser/cache tidak dibersihkan pengguna.
+const simonaStorage = {
+  async get(key, shared){
+    if(window.storage && typeof window.storage.get === 'function'){
+      try{ const r = await window.storage.get(key, shared); if(r) return r; }
+      catch(e){ /* window.storage ada tapi gagal (mis. key belum pernah diset) -> coba localStorage */ }
+    }
+    try{
+      const val = localStorage.getItem(key);
+      return val !== null ? { key, value: val, shared: !!shared } : null;
+    }catch(e){ return null; }
+  },
+  async set(key, value, shared){
+    if(window.storage && typeof window.storage.set === 'function'){
+      try{ const r = await window.storage.set(key, value, shared); if(r) return r; }
+      catch(e){ /* fallback ke localStorage di bawah */ }
+    }
+    try{
+      localStorage.setItem(key, value);
+      return { key, value, shared: !!shared };
+    }catch(e){ return null; }
+  },
+};
+ 
 /* ================= ICONS ================= */
 const msi = (name, extra='') => `<span class="material-symbols-outlined ${extra}">${name}</span>`;
-
+ 
 /* ================= CONSTANTS ================= */
 const DEPARTMENTS = ['FPA Dept.','VSD Dept.','Acc & Tax Dept.','RB Dept.','Aftersales Dept.','LNK Dept.','Audit Internal Dept.','HC Dept.','GA & Legal Dept.','Corporate Strategy Dept.','Fleet & GSO Dept.','Direksi Dept.'];
 const DOC_TYPES = ['AR','AP'];
@@ -14,7 +42,7 @@ const SUMBER = ['TAM','Affiliasi','Main Dealer','Lainnya'];
 const DOCS_KEY = 'doctrack:documents:v2';
 const USERS_KEY = 'doctrack:users:v2';
 const SHEETS_URL_KEY = 'doctrack:sheets-url';
-
+ 
 const STATUS_BADGE = {
   'Draft': 'bg-slate-100 text-slate-600',
   'Proses Tax': 'bg-amber-100 text-amber-700',
@@ -25,7 +53,7 @@ const STATUS_BADGE = {
   'Bayar': 'bg-teal-100 text-teal-700',
 };
 const TYPE_BADGE = { AR:'bg-indigo-100 text-indigo-700', AP:'bg-rose-100 text-rose-700' };
-
+ 
 function cryptoId(){ return 'id-' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
 function initials(name){ return (name||'').split(' ').map(w=>w[0]).filter(Boolean).slice(0,2).join('').toUpperCase(); }
 function fmtDate(iso){
@@ -77,4 +105,5 @@ function canEditDisburse(doc){
   if(!hasDeptAccess(doc)) return false;
   return !!(state.user.permissions && state.user.permissions.editDisburse);
 }
-
+ 
+ 
