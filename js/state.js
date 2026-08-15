@@ -17,23 +17,23 @@ async function initStorage(){
   state.documents = seedDocuments();
   state.users = seedUsers();
   try{
-    const r = await window.storage.get(DOCS_KEY, false);
+    const r = await simonaStorage.get(DOCS_KEY, false);
     if(r && r.value){ const parsed = JSON.parse(r.value); if(parsed.length) state.documents = parsed; }
   }catch(e){ /* keep seed */ }
   try{
-    const r2 = await window.storage.get(USERS_KEY, false);
+    const r2 = await simonaStorage.get(USERS_KEY, false);
     if(r2 && r2.value){ const parsed = JSON.parse(r2.value); if(parsed.length) state.users = parsed; }
   }catch(e){ /* keep seed */ }
   try{
-    const r3 = await window.storage.get(SHEETS_URL_KEY, false);
+    const r3 = await simonaStorage.get(SHEETS_URL_KEY, false);
     if(r3 && r3.value) state.sheetsUrl = r3.value;
   }catch(e){ /* keep empty */ }
   try{
-    const r4 = await window.storage.get(SYNCED_IDS_KEY, false);
+    const r4 = await simonaStorage.get(SYNCED_IDS_KEY, false);
     if(r4 && r4.value){ const parsed = JSON.parse(r4.value); state.syncedDocIds = parsed.docIds||[]; state.syncedUserIds = parsed.userIds||[]; }
   }catch(e){ /* keep empty */ }
   try{
-    const r5 = await window.storage.get(AUTO_SYNC_KEY, false);
+    const r5 = await simonaStorage.get(AUTO_SYNC_KEY, false);
     if(r5 && r5.value!==undefined) state.autoSyncEnabled = r5.value !== 'false';
   }catch(e){ /* keep default true */ }
   state.loaded = true;
@@ -43,16 +43,15 @@ async function initStorage(){
   if(typeof startAutoSync === 'function') startAutoSync();
 }
 async function persistDocs(skipAutoPush){
-  try{ await window.storage.set(DOCS_KEY, JSON.stringify(state.documents), false); }
+  try{ await simonaStorage.set(DOCS_KEY, JSON.stringify(state.documents), false); }
   catch(e){ console.error('Gagal menyimpan dokumen', e); }
   if(!skipAutoPush && typeof scheduleAutoPush === 'function') scheduleAutoPush('docs');
 }
 async function persistUsers(skipAutoPush){
-  try{ await window.storage.set(USERS_KEY, JSON.stringify(state.users), false); }
+  try{ await simonaStorage.set(USERS_KEY, JSON.stringify(state.users), false); }
   catch(e){ console.error('Gagal menyimpan user', e); }
   if(!skipAutoPush && typeof scheduleAutoPush === 'function') scheduleAutoPush('users');
 }
-async function persistSheetsUrl(){ try{ await window.storage.set(SHEETS_URL_KEY, state.sheetsUrl, false); }catch(e){ console.error('Gagal menyimpan URL Sheets', e); } }
-async function persistSyncedIds(){ try{ await window.storage.set(SYNCED_IDS_KEY, JSON.stringify({docIds:state.syncedDocIds, userIds:state.syncedUserIds}), false); }catch(e){ /* noop */ } }
-async function persistAutoSyncEnabled(){ try{ await window.storage.set(AUTO_SYNC_KEY, String(state.autoSyncEnabled), false); }catch(e){ /* noop */ } }
-
+async function persistSheetsUrl(){ try{ await simonaStorage.set(SHEETS_URL_KEY, state.sheetsUrl, false); }catch(e){ console.error('Gagal menyimpan URL Sheets', e); } }
+async function persistSyncedIds(){ try{ await simonaStorage.set(SYNCED_IDS_KEY, JSON.stringify({docIds:state.syncedDocIds, userIds:state.syncedUserIds}), false); }catch(e){ /* noop */ } }
+async function persistAutoSyncEnabled(){ try{ await simonaStorage.set(AUTO_SYNC_KEY, String(state.autoSyncEnabled), false); }catch(e){ /* noop */ } }
