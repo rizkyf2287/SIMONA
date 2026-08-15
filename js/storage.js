@@ -1,11 +1,11 @@
 /* ================= FILE STORAGE (per-dokumen, terpisah dari blob utama) ================= */
 function fileKey(docId){ return 'simona:file:'+docId; }
 async function saveDocFile(docId, fileObj){
-  try{ await window.storage.set(fileKey(docId), JSON.stringify(fileObj), false); return true; }
+  try{ await simonaStorage.set(fileKey(docId), JSON.stringify(fileObj), false); return true; }
   catch(e){ console.error('Gagal menyimpan file', e); return false; }
 }
 async function loadDocFile(docId){
-  try{ const r = await window.storage.get(fileKey(docId), false); return r && r.value ? JSON.parse(r.value) : null; }
+  try{ const r = await simonaStorage.get(fileKey(docId), false); return r && r.value ? JSON.parse(r.value) : null; }
   catch(e){ return null; }
 }
 
@@ -23,4 +23,3 @@ async function uploadFileToDriveBackend(docId, docType, fileName, mimeType, data
   if(!json.ok) throw new Error(json.error || 'Gagal mengunggah ke Drive');
   return json; // {ok, fileId, url, fileName, folderPath}
 }
-
