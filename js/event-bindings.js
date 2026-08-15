@@ -121,11 +121,38 @@ function bindPageEvents(){
         let attached = false;
         if(state.sheetsUrl){
           try{
-            const driveRes = await uploadFileToDriveBackend(doc.docId, doc.docType, file.name, file.type, dataUrl);
-            doc.attachments = [{ name:driveRes.fileName, size:fileSizeLabel, url:driveRes.url, driveFileId:driveRes.fileId }];
-            attached = true;
-            showToast('File terunggah ke Google Drive');
+            // PERBAIKAN CORS & UPLOAD: Gunakan fetch langsung dengan format yang benar
+            const res = await fetch(state.sheetsUrl, {
+              method: 'POST',
+              redirect: 'follow', // INI SANGAT PENTING
+              headers: {
+                'Content-Type': 'text/plain;charset=utf-8' // JANGAN gunakan application/json
+              },
+              body: JSON.stringify({
+                type: 'file',
+                docType: doc.docType,
+                docId: doc.docId,
+                fileName: file.name,
+                mimeType: file.type,
+                base64Data: dataUrl // Data Base64 (termasuk awalan 'data:...' yang sudah diatasi di backend)
+              })
+            });
+
+            if (!res.ok) throw new Error('Koneksi HTTP Gagal (' + res.status + ')');
+            
+            const driveRes = await res.json();
+            
+            if (driveRes.ok) {
+                doc.attachments = [{ name:driveRes.fileName, size:fileSizeLabel, url:driveRes.url, driveFileId:driveRes.fileId }];
+                attached = true;
+                showToast('File terunggah ke Google Drive');
+            } else {
+                throw new Error(driveRes.error || 'Server menolak file.');
+            }
+
           }catch(err){
+            // Jika ada error (termasuk failed to fetch), masuk ke sini dan lari ke mode lokal
+            console.error('Error Drive:', err);
             showToast('Gagal unggah ke Drive, disimpan lokal: '+err.message, 'error', 'error');
           }
         }
